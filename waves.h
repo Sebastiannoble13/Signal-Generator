@@ -64,3 +64,39 @@ class Sine : public Signal
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
 
 };
+
+/* Triangle Signal */
+class Triangle : public Signal
+{
+    public:
+    Triangle(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+
+    protected:
+    virtual std::valarray<double> evaluate(std::valarray<double> ts);
+};
+
+/* Saw Signal */
+class Saw : public Signal
+{
+    public:
+    Saw(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+
+    protected:
+    virtual std::valarray<double> evaluate(std::valarray<double> ts);
+};
+
+/* Square Signal */
+class Square : public Signal
+{
+    public:
+    Square(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+
+    protected:
+    virtual std::valarray<double> evaluate(std::valarray<double> ts);
+};
+
+/* Helper Maths Functions */
+std::valarray<double> unbias(std::valarray<double> ys);
+std::valarray<double> normalize(std::valarray<double> ys, float amp);
+double fractional(double n);
+double sign(double n);
