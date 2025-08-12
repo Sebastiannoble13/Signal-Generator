@@ -45,7 +45,7 @@ class Signal
     public:
     int freq; // frequency of the signal
     float amp; // amplitude of the signal
-    float off; // phase offset of the signal
+    float off; // phase offset of the signal (in radians)
     
     Signal(int frequency, float amplitude, float offset);
     Wave makeWave(int sampleRate, float duration);
