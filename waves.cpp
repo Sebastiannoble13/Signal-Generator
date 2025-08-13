@@ -75,11 +75,51 @@ Wave Signal::makeWave(int sampleRate, float duration)
     return Wave(ys, sampleRate, duration);
 }
 
+// add Signal to modulate amplitude
+void Signal::addAmpMod(Signal *signal, float amount)
+{
+    // check amount
+    if(amount < 0 || amount > 1)
+    {
+        throw std::invalid_argument("amount must be a value between 0 and 1\n");
+    }
+
+    // set modulator
+    modulator mod;
+    mod.signal = signal;
+    mod.amount = amount;
+
+    // add modulator to vertor of modulators
+    ampMods.push_back(mod);
+}
+
+// get valarray of amplitudes, post modulation
+std::valarray<double> Signal::getAmp(std::valarray<double> ts)
+{
+    std::valarray<double> amps(ts.size());
+    std::fill(begin(amps), end(amps), amp);
+
+    if(ampMods.size() == 0)
+    {
+        return amps;
+    }
+
+    // loop over the modulators
+    for(modulator mod : ampMods)
+    {
+        // evaluate them with ts then multiply by amount
+        amps += mod.signal->evaluate(ts) * mod.amount;
+    }
+
+    amps = normalize(amps, 1);
+    return amps;
+}
+
 // evaluate funcion for a Sine Signal
 std::valarray<double> Sine::evaluate(std::valarray<double> ts)
 {
     std::valarray<double> phases = PI2 * freq * ts + off;
-    return amp * cos(phases);
+    return getAmp(ts) * cos(phases);
 }
 
 // evaluate function for Triangle Signal
@@ -88,7 +128,7 @@ std::valarray<double> Triangle::evaluate(std::valarray<double> ts)
     std::valarray<double> cycles = freq * ts + off / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
     std::valarray<double> ys = abs(frac - 0.5);
-    return normalize(unbias(ys), amp);
+    return normalize(unbias(ys), 1) * getAmp(ts);
 }
 
 // evaluate function for Saw Signal
@@ -96,7 +136,7 @@ std::valarray<double> Saw::evaluate(std::valarray<double> ts)
 {
     std::valarray<double> cycles = freq * ts + off / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
-    return normalize(unbias(frac), amp); 
+    return normalize(unbias(frac), 1) * getAmp(ts); 
 }
 
 // evaluate function for Square Signal
@@ -104,7 +144,7 @@ std::valarray<double> Square::evaluate(std::valarray<double> ts)
 {
     std::valarray<double> cycles = freq * ts + off / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
-    return amp * unbias(frac).apply(sign);
+    return getAmp(ts) * unbias(frac).apply(sign);
 }
 
 

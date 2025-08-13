@@ -4,6 +4,15 @@
 
 const double PI2 = M_PI * 2;
 
+class Signal;
+
+// Signal and amount to modulate another Signal
+typedef struct modulator
+{
+    Signal *signal; // pointer to modulation signal
+    float amount; // amount of modulation
+} modulator;
+
 // wav file header (for writing files not reading)
 typedef struct wavHeader 
 {
@@ -47,11 +56,15 @@ class Signal
     float amp; // amplitude of the signal
     float off; // phase offset of the signal (in radians)
     
-    Signal(int frequency, float amplitude, float offset);
+    Signal(int frequency = 440, float amplitude = 1.0, float offset = 0);
     Wave makeWave(int sampleRate, float duration);
+    void addAmpMod(Signal *signal, float amount);
     
     protected:
+    std::vector<modulator> ampMods; // amplitude modulators
+    
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
+    std::valarray<double> getAmp(std::valarray<double> ts);
 };
 
 /* Sine Signal */
