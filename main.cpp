@@ -11,8 +11,8 @@ int main(int argc, char* argv[])
     }
 
     Sine sine(atoi(argv[1]), atof(argv[2]), atof(argv[3]));
-    Sine mod(10, 1, 0);
-    sine.addAmpMod(&mod, 1);
+    Sine mod(60, 1, 0);
+    sine.addMod(2, &mod, 1);
     Wave sinewave = sine.makeWave(44100, 1.0);
     sinewave.toWav("out.wav");
     return 0;

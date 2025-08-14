@@ -75,9 +75,17 @@ Wave Signal::makeWave(int sampleRate, float duration)
     return Wave(ys, sampleRate, duration);
 }
 
-// add Signal to modulate amplitude
-void Signal::addAmpMod(Signal *signal, float amount)
+// add Signal to modulate 
+// destination = (0 : frequency, 1 : amplitude, 2 : phase offset)
+// signal = pointer to signal to do the modulating
+// amount = amount of modulation (float between 0 - 1)
+void Signal::addMod(int destination, Signal *signal, float amount)
 {
+    // check destination
+    if(destination < 0 || destination > 2)
+    {
+        throw std::invalid_argument("destination must be a value between 0 and 2 (0 : frequency, 1 : amplitude, 2 : phase offset)\n");
+    }
     // check amount
     if(amount < 0 || amount > 1)
     {
@@ -90,7 +98,7 @@ void Signal::addAmpMod(Signal *signal, float amount)
     mod.amount = amount;
 
     // add modulator to vertor of modulators
-    ampMods.push_back(mod);
+    mods[destination].push_back(mod);
 }
 
 // get valarray of amplitudes, post modulation
@@ -99,33 +107,52 @@ std::valarray<double> Signal::getAmp(std::valarray<double> ts)
     std::valarray<double> amps(ts.size());
     std::fill(begin(amps), end(amps), amp);
 
-    if(ampMods.size() == 0)
+    if(mods[1].size() == 0)
     {
         return amps;
     }
 
     // loop over the modulators
-    for(modulator mod : ampMods)
+    for(modulator mod : mods[1])
     {
         // evaluate them with ts then multiply by amount
         amps += mod.signal->evaluate(ts) * mod.amount;
     }
 
-    amps = normalize(amps, 1);
-    return amps;
+    return normalize(amps, 1);
+}
+
+// get valarray of phase offsets, post modulation
+std::valarray<double> Signal::getPhase(std::valarray<double> ts)
+{
+    std::valarray<double> phases(ts.size());
+    std::fill(begin(phases), end(phases), off);
+
+    if(mods[2].size() == 0)
+    {
+        return phases;
+    }
+
+    // loop over modulators
+    for(modulator mod : mods[2])
+    {
+        phases += mod.signal->evaluate(ts) * mod.amount;
+    }
+
+    return normalize(phases, 1);
 }
 
 // evaluate funcion for a Sine Signal
 std::valarray<double> Sine::evaluate(std::valarray<double> ts)
 {
-    std::valarray<double> phases = PI2 * freq * ts + off;
+    std::valarray<double> phases = PI2 * freq * ts + getPhase(ts);
     return getAmp(ts) * cos(phases);
 }
 
 // evaluate function for Triangle Signal
 std::valarray<double> Triangle::evaluate(std::valarray<double> ts)
 {
-    std::valarray<double> cycles = freq * ts + off / PI2;
+    std::valarray<double> cycles = freq * ts + getPhase(ts) / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
     std::valarray<double> ys = abs(frac - 0.5);
     return normalize(unbias(ys), 1) * getAmp(ts);
@@ -134,7 +161,7 @@ std::valarray<double> Triangle::evaluate(std::valarray<double> ts)
 // evaluate function for Saw Signal
 std::valarray<double> Saw::evaluate(std::valarray<double> ts)
 {
-    std::valarray<double> cycles = freq * ts + off / PI2;
+    std::valarray<double> cycles = freq * ts + getPhase(ts) / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
     return normalize(unbias(frac), 1) * getAmp(ts); 
 }
@@ -142,7 +169,7 @@ std::valarray<double> Saw::evaluate(std::valarray<double> ts)
 // evaluate function for Square Signal
 std::valarray<double> Square::evaluate(std::valarray<double> ts)
 {
-    std::valarray<double> cycles = freq * ts + off / PI2;
+    std::valarray<double> cycles = freq * ts + getPhase(ts) / PI2;
     std::valarray<double> frac = cycles.apply(fractional);
     return getAmp(ts) * unbias(frac).apply(sign);
 }
