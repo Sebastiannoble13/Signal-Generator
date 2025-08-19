@@ -5,7 +5,10 @@
 
 const double PI2 = M_PI * 2;
 
-class Signal;
+const int A4_TUNING = 440; // frequency (Hz) of A4
+const float A4_INDEX = 57; // number of semitones from C0 to A4
+
+class Signal; // Signal class prototype
 
 // Signal and amount to modulate another Signal
 typedef struct modulator
@@ -53,11 +56,11 @@ class Wave
 class Signal
 {
     public:
-    int freq; // frequency of the signal
+    float freq; // frequency of the signal
     float amp; // amplitude of the signal
     float off; // phase offset of the signal (in radians)
     
-    Signal(int frequency = 440, float amplitude = 1.0, float offset = 0);
+    Signal(float frequency = 440, float amplitude = 1.0, float offset = 0);
     Wave makeWave(int sampleRate, float duration);
     void addMod(int destination, Signal *signal, float amount);
     
@@ -65,6 +68,7 @@ class Signal
     std::vector<modulator> mods[3];
     
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
+    std::valarray<double> getFreq(std::valarray<double> ts);
     std::valarray<double> getAmp(std::valarray<double> ts);
     std::valarray<double> getPhase(std::valarray<double> ts);
 };
@@ -73,7 +77,7 @@ class Signal
 class Sine : public Signal
 {
     public:
-    Sine(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+    Sine(float frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
 
     protected:
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
@@ -84,7 +88,7 @@ class Sine : public Signal
 class Triangle : public Signal
 {
     public:
-    Triangle(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+    Triangle(float frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
 
     protected:
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
@@ -94,7 +98,7 @@ class Triangle : public Signal
 class Saw : public Signal
 {
     public:
-    Saw(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+    Saw(float frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
 
     protected:
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
@@ -104,7 +108,7 @@ class Saw : public Signal
 class Square : public Signal
 {
     public:
-    Square(int frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
+    Square(float frequency, float amplitude, float offset) : Signal(frequency, amplitude, offset){}
 
     protected:
     virtual std::valarray<double> evaluate(std::valarray<double> ts);
@@ -115,3 +119,6 @@ std::valarray<double> unbias(std::valarray<double> ys);
 std::valarray<double> normalize(std::valarray<double> ys, float amp);
 double fractional(double n);
 double sign(double n);
+double clamp(double n, double min, double max);
+double semiToFreq(double semis);
+double freqToSemi(double freq);
